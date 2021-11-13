@@ -106,7 +106,7 @@ class AppointmentsController extends Controller
               <td>".$location_name."</td>
               <td>".$therapistNamePrint."</td>
             </tr>";
-		}
+        }
         echo " <table><tr>
               <th>Status</th>
               <th>start time</th>
@@ -1453,7 +1453,7 @@ class AppointmentsController extends Controller
         return Datatables::of($appointments)
 
             ->editColumn('checkbox', function($appointments) { return $appointments->id;})
-            ->editColumn('status', function( $appointments) {
+            ->editColumn('status', function( $appointments) use ($searchByStatus) {
                 $bookingstatus ='';
 
 
@@ -1480,6 +1480,8 @@ class AppointmentsController extends Controller
                 }
                 else
                 {
+                    return $this->get_record_by_status($searchByStatus,$appointments);
+
                     if($appointments->booking_status=="booking_paid_pin")
                     {
                         if($appointments->paid_waya=="")
@@ -1649,6 +1651,54 @@ class="btn btn-xs btn-primary" title="View"><i class="fa fa-eye"></i></a>';
         // }
 
     }
+
+	
+    public function get_record_by_status($field,$appointments)
+    {
+        switch ($field) {
+            case 'mollie_paid':
+                return 'Mollie Paid';
+            case 'cash_paid': 
+                return 'Cash Paid';
+            case 'bank_paid': 
+                return 'Bank Paid';
+            case 'booking_unpaid': 
+                $ExpRem="";
+                if($appointments->status=="booking_confirmed")
+                {
+                    if($appointments->status_rm_exp=='E')
+                    { $ExpRem = "(Expired)";}
+                    elseif($appointments->status_rm_exp=='R')
+                    { $ExpRem = "(Reminder)";}
+                }
+                return "Unpaid ".$ExpRem;
+            case 'booking_confirmed': 
+                return 'Confirmed';
+            case 'booking_pending': 
+                return 'Pending';
+                case 'paid_pin':
+                return 'Paid Pin';
+            default:
+
+                if($appointments->booking_status=="booking_paid_pin")
+                {
+                    if($appointments->paid_waya=="")
+                    { return "Paid Pin "; }
+                    else
+                    { return"Paid ".$appointments->paid_waya; }
+                }
+                elseif($appointments->booking_status=="booking_unpaid")
+                { return"Unpaid"; }
+                elseif($appointments->booking_status=="partial_paid")
+                { return"Partial Paid"; }
+                else
+                { return $appointments->booking_status;  }
+        }
+                        
+        
+
+    }
+
     
     public function copy($id)
     {
@@ -2305,16 +2355,12 @@ class="btn btn-xs btn-primary" title="View"><i class="fa fa-eye"></i></a>';
              Log::info('Log Created: Matter '.$matter);
             */
 
-           try {
-			    Mail::send([], [], function ($message) use ($clientemail,$email_subject,$matter) {
+            Mail::send([], [], function ($message) use ($clientemail,$email_subject,$matter) {
                 $message->to($clientemail)
                     ->from("info@praktijk-afspraken.nl")
                     ->subject($email_subject)
                     ->setBody($matter, 'text/html'); // for HTML rich messages
             });
-		   } catch (\Throwable $th) {
-			   //throw $th;
-		   }
         }
 
         if(!empty($bcc_email_id))
@@ -2337,16 +2383,12 @@ class="btn btn-xs btn-primary" title="View"><i class="fa fa-eye"></i></a>';
 
         }
 
-		try {
-			Mail::send([], [], function ($message) use ($thrapist_email,$email_therapist_subject,$therapist_matter) {
-				$message->to($thrapist_email)
-					->from("info@praktijk-afspraken.nl")
-					->subject($email_therapist_subject)
-					->setBody($therapist_matter, 'text/html'); // for HTML rich messages
-			});
-		} catch (\Throwable $th) {
-			//throw $th;
-		}
+        Mail::send([], [], function ($message) use ($thrapist_email,$email_therapist_subject,$therapist_matter) {
+            $message->to($thrapist_email)
+                ->from("info@praktijk-afspraken.nl")
+                ->subject($email_therapist_subject)
+                ->setBody($therapist_matter, 'text/html'); // for HTML rich messages
+        });
         if(count($dateArray) > 0)
         {
             $dates = implode(',', $dateArray);
@@ -2501,30 +2543,27 @@ class="btn btn-xs btn-primary" title="View"><i class="fa fa-eye"></i></a>';
             if(count($ArrClientEmail)==1)
             {
 
-				try {
-					Mail::send([], [], function ($message) use ($clientemail,$email_subject,$matter,$email_attachment_path,$email_filename_attachment,$application) {
+                Mail::send([], [], function ($message) use ($clientemail,$email_subject,$matter,$email_attachment_path,$email_filename_attachment,$application) {
 
-						$message->to($clientemail)
-							->subject($email_subject)
-							->from("info@praktijk-afspraken.nl")
-							->attach($email_attachment_path, [
-								'as' => $email_filename_attachment,
-								'mime' => $application,
-							])->setBody($matter, 'text/html')
-							->setContentType('text/html');
-	
-					});
-				} catch (\Throwable $th) {
-					//throw $th;
-				}
+                    $message->to($clientemail)
+                        ->subject($email_subject)
+                        ->from("info@praktijk-afspraken.nl")
+                        ->attach($email_attachment_path, [
+                            'as' => $email_filename_attachment,
+                            'mime' => $application,
+                        ])->setBody($matter, 'text/html')
+                        ->setContentType('text/html');
+
+                });
             }
             elseif(count($ArrClientEmail)>1)
             {
                 $StremaiBcc=[];
                 foreach ($ArrClientEmail as $key => $value)
                 { if($key>0 && $value!="") { $StremaiBcc[] = $value; } }
-               try {
-				Mail::send([], [], function ($message) use ($clientemail,$email_subject,$matter,$email_attachment_path,$email_filename_attachment,$application,$StremaiBcc) {
+                Mail::send([], [], function ($message) use ($clientemail,$email_subject,$matter,$email_attachment_path,$email_filename_attachment,$application,$StremaiBcc) {
+
+
 
                     $message->to($clientemail)
                         ->cc($StremaiBcc)
@@ -2538,9 +2577,6 @@ class="btn btn-xs btn-primary" title="View"><i class="fa fa-eye"></i></a>';
 
                     //dd($message->getHeaders()); exit;
                 });
-			   } catch (\Throwable $th) {
-				   //throw $th;
-			   }
             }
 
             $Filename=str_replace(".pdf","", $email_filename_attachment);
@@ -3731,39 +3767,8 @@ class="btn btn-xs btn-primary" title="View"><i class="fa fa-eye"></i></a>';
     }
     public function changeinvoicestatusP(Request $request)
     {
+
         Date::setLocale('nl');
-		
-		if($request->is_save == 'save'){
-
-			if(!$request->client_name){
-				return back();
-			}
-			$appointment = Appointment::findOrFail($request->appointment_id);
-
-
-			$prev_client = Client::where('id',$request->client_id)->first();
-
-			$MsgStatusNameChanged = 'Client name changed to '.$request->client_name.' '.' previously named as '.$prev_client->first_name.' '.$prev_client->last_name;
-			//die($MsgStatusNameChanged);
-			$Logdata = new Logdata;
-			$Logdata->log_from="Appoinment";
-			$Logdata->refrance_id = $appointment->id;
-			$Logdata->log_datetime = date("Y-m-d h:i:s");
-			$userL = \Auth::user();
-			$Logdata->tr_by = $userL->id;
-			$Logdata->message = $MsgStatusNameChanged;
-			$Logdata->save();
-			$appointment->client_id = $request->client_id;
-			$appointment->update();
-
-			return redirect()->back();
-
-		}
-
-
-
-
-			
         /*if($request->booking_status=="booking_paid_pin")
           { $status = "paid"; }
         elseif($request->booking_status=="cash_paid")
