@@ -13,7 +13,14 @@ class UserSeed extends Seeder
     {
         $items = [
             
-            ['id' => 1, 'name' => 'Admin', 'email' => 'admin@admin.com', 'password' => '$2y$10$er5358zLagPnjJlmxstLYuWBd.jJzTwE6sVzeXNSm96RQAgqLXoi2', 'role_id' => 1, 'remember_token' => '',],
+            [
+				'id' => 1, 
+				'name' => 'Admin', 
+				'email' => 'master@erp.com', 
+				'password' => \Hash::make('secret'), 
+				'role_id' => 1, 
+				'remember_token' => ''
+			],
 
         ];
 

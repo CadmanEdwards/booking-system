@@ -11,6 +11,10 @@ Route::get('/reminder', function() {
     Artisan::call('reminder:email');
 });
 
+Route::get('/imap_email', function() {
+    Artisan::call('fetch:imap_email');
+});
+
 Route::get('/reminder-invoice', function() {
     Artisan::call('reminder:invoice');
 });
@@ -67,10 +71,17 @@ Route::get('clear_cache', function () {
 
 });
 
+
 Route::group(['middleware' => ['auth'], 'prefix' => 'admin', 'as' => 'admin.'], function () {
     Route::get('/home', 'HomeController@index');
     Route::get('/incoming-invoices', 'Admin\AppointmentsController@upcoming_bookings')->name('upcoming.booking');
+    Route::get('/fetch_emails', 'Admin\AppointmentsController@fetch_emails')->name('fetch_emails');
+    Route::get('/mark_as_seen_email/{id}', 'Admin\AppointmentsController@mark_as_seen_email')->name('mark_as_seen_email');
+    Route::get('/getDownload/{path}', 'Admin\AppointmentsController@getDownload')->name('getDownload');
     Route::get('/download-vcard', 'Admin\AppointmentsController@raf_create_vcard');
+
+
+    Route::get('/new_create-incoming-invoice', 'Admin\AppointmentsController@new_create_upcoming_booking');
 
     Route::get('/create-incoming-invoice', 'Admin\AppointmentsController@create_upcoming_booking');
     Route::get('/edit-incoming-invoice/{id}', 'Admin\AppointmentsController@edit_upcoming_booking')->name('edit.upcoming_booking');

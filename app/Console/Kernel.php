@@ -15,6 +15,7 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         //
        /*'App\Console\Commands\Createemployeschedule',*/
+        'App\Console\Commands\ImapEmailClient',
         'App\Console\Commands\ReminderEmailClient',
         'App\Console\Commands\ReminderEmailInvoice',
     ];
